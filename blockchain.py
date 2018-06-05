@@ -89,11 +89,10 @@ def isUpdated():
     lastBlock = getLastBlock()
     lastIndex = lastBlock['index']
     localLastBlock = getLocalLastBlock()
-    
+    localLastIndex = -1
+
     if len(localLastBlock) != 0:
         localLastIndex = localLastBlock['index']
-    else:
-        localLastIndex = -1
     
     if localLastIndex < lastIndex:
         print("update")
@@ -119,7 +118,7 @@ def updateThread():
 def addBlock():
     info = ""
     if request.method == 'POST':  
-       info = request.form.get('blockInfo')
+       info = request.form['blockInfo']
     print(info)
     blockInfo = json.loads(info)
     #Check and update the local blockchain
@@ -130,10 +129,10 @@ def addBlock():
     # newBlock = Block(blockInfo['previousHash'],parseTransactions(blockInfo['transactions']))
     previousBlock = getLastBlock()
 
-    if block_.validateJson(previousBlock, blockInfo):
+    if block_.Block.validateJson(previousBlock, blockInfo):
         #Added to the list
         Blockchain[blockInfo['hash']] = blockInfo
-        blocksList.append(Block(blockInfo['hash'],parseTransactions(blockInfo['transactions']),int(lastIndex)))
+        #blocksList.append(Block(blockInfo['hash'],parseTransactions(blockInfo['transactions']),int(lastIndex)))
     
 
 @app.route('/createblock')
@@ -149,7 +148,7 @@ def createBlock():
         #Add to the existing chain
         Blockchain[newBlock.getHash()] = newBlockJson
         #Send a request to primary nodes to update
-        payload = {'blockInfo':newBlock}
+        payload = {'blockInfo':json.dumps(newBlockJson)}
         r = requests.post(pnode+"/addblock", data = payload)
 
         return json.dumps(Blockchain)
