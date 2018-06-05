@@ -10,6 +10,16 @@ pnode = 'http://127.0.0.1:5000/chain'
 Blockchain = {}
 blocksList = []
 
+def parseTransactions(transaction):
+    allTransactions = []
+    snippets = transactions.split(",")
+    for snippet in snippets:
+        source = snippet.split(":")[0]
+        dest = snippet.split(":")[1]
+        value = int(snippet.split(":")[2])
+        allTransactions.append(Transaction(source,dest,value))
+    return allTransactions
+
 @app.route("/initiate")
 def genesisBlock():
     genesisTransaction = Transaction("","",0);
@@ -48,8 +58,8 @@ def addBlock():
     latestBlockchain = json.loads(r.text)
 
     Blockchain[blockInfo['hash']] = blockInfo
+    blocksList.append(Block(blockInfo['previousHash'],parseTransactions(blockInfo['transactions'])))
     
-    #Create t
 
 
 # def generateRandomString(num):
