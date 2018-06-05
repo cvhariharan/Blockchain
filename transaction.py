@@ -4,3 +4,6 @@ class Transaction:
         self.source = source
         self.destination = dest
         self.value = value
+    
+    def getInfo(self):
+        return self.source + " to " + self.destination + ":" + str(self.value)
