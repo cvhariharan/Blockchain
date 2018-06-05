@@ -6,4 +6,4 @@ class Transaction:
         self.value = value
     
     def getInfo(self):
-        return self.source + " to " + self.destination + ":" + str(self.value)
+        return self.source + ":" + self.destination + ":" + str(self.value)
