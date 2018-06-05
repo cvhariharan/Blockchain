@@ -1,12 +1,16 @@
 from block import Block
 import block as block_
 from transaction import Transaction
-import json, random, string, requests
+import json, random, string, requests, time
+import _thread
 from flask import Flask, request
 app = Flask(__name__)
 
 #Primary node
-pnode = 'http://127.0.0.1:5000/chain'
+pnode = 'http://127.0.0.1:5000'
+port = 0
+#Update intervals in seconds
+uTime = 10
 
 Blockchain = {}
 blocksList = []
@@ -59,18 +63,56 @@ def printBlockchain():
 
 def getBlockchain():
     #Get the updated blockchain from a hard-coded primary node
-    r = requests.get(pnode)
+    r = requests.get(pnode+"/chain")
     latestBlockchain = json.loads(r.text)
     return latestBlockchain
 
 def getLastBlock():
-    previousBlock = {}
+    lastBlock = {}
     latestBlockchain = getBlockchain()
     lastIndex = len(latestBlockchain) - 1
     for key,value in latestBlockchain.items():
         if value['index'] == lastIndex:
-            previousBlock = value
-    return previousBlock
+            lastBlock = value
+    return lastBlock
+
+def getLocalLastBlock():
+    #Returns the last block stored locally
+    lastBlock = {}
+    lastIndex = len(Blockchain) - 1
+    for key,value in Blockchain.items():
+        if value['index'] == lastIndex:
+            lastBlock = value
+    return lastBlock
+
+def isUpdated():
+    lastBlock = getLastBlock()
+    lastIndex = lastBlock['index']
+    localLastBlock = getLocalLastBlock()
+    
+    if len(localLastBlock) != 0:
+        localLastIndex = localLastBlock['index']
+    else:
+        localLastIndex = -1
+    
+    if localLastIndex < lastIndex:
+        print("update")
+        return False
+    return True
+
+def update():
+    #Checks the primary nodes for updated blockchain
+    global Blockchain
+    if not isUpdated():
+        Blockchain = getBlockchain()
+        print("Testing...")
+        print(Blockchain)
+
+def updateThread():
+    #Just an invite loop meant to be run as thread to update the local blockchain
+    while True:
+        update()
+        time.sleep(uTime)
 
 
 @app.route("/addblock", methods=['GET', 'POST']) 
@@ -78,9 +120,13 @@ def addBlock():
     info = ""
     if request.method == 'POST':  
        info = request.form.get('blockInfo')
+    print(info)
     blockInfo = json.loads(info)
-    latestBlockchain = getBlockchain()
-    lastIndex = len(latestBlockchain) - 1
+    #Check and update the local blockchain
+    if port != 5000:
+        #Update only of not primary node
+        update()
+    lastIndex = len(Blockchain) - 1
     # newBlock = Block(blockInfo['previousHash'],parseTransactions(blockInfo['transactions']))
     previousBlock = getLastBlock()
 
@@ -102,6 +148,10 @@ def createBlock():
     if block_.Block.validateJson(getLastBlock(),newBlockJson):
         #Add to the existing chain
         Blockchain[newBlock.getHash()] = newBlockJson
+        #Send a request to primary nodes to update
+        payload = {'blockInfo':newBlock}
+        r = requests.post(pnode+"/addblock", data = payload)
+
         return json.dumps(Blockchain)
     return "Could not create"
     #Parse the transactions
@@ -115,8 +165,8 @@ def createBlock():
 #     #Send a request to the active nodes
 
 if __name__ == '__main__':
-    #Open blockchain.json and add it to a list
-    with open("blockchain.json",'r') as b:
-        json.loads(b.read())
-    port = input("Port: ")
+    port = int(input("Port: "))
+    #Start the updateThread to continuously check and update the local blockchain
+    if port != 5000:
+        _thread.start_new_thread( updateThread , ())
     app.run("127.0.0.1",port)
