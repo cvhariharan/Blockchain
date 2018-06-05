@@ -1,4 +1,5 @@
 from block import Block
+import block as block_
 from transaction import Transaction
 import json, random, string, requests
 from flask import Flask, request
@@ -9,6 +10,15 @@ pnode = 'http://127.0.0.1:5000/chain'
 
 Blockchain = {}
 blocksList = []
+
+def generateRandomString(num):
+    return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(num)])
+
+def dummyTransactions(num):
+    t = []
+    for x in range(num):
+        t.append(Transaction(generateRandomString(8),generateRandomString(8),random.randint(1,100)))
+    return t
 
 def parseTransactions(transaction):
     allTransactions = []
@@ -47,41 +57,54 @@ def printBlockchain():
     #         content = content + line
     # return content
 
+def getBlockchain():
+    #Get the updated blockchain from a hard-coded primary node
+    r = requests.get(pnode)
+    latestBlockchain = json.loads(r.text)
+    return latestBlockchain
+
+def getLastBlock():
+    previousBlock = {}
+    latestBlockchain = getBlockchain()
+    lastIndex = len(latestBlockchain) - 1
+    for key,value in latestBlockchain.items():
+        if value['index'] == lastIndex:
+            previousBlock = value
+    return previousBlock
+
+
 @app.route("/addblock", methods=['GET', 'POST']) 
 def addBlock():
     info = ""
     if request.method == 'POST':  
        info = request.form.get('blockInfo')
     blockInfo = json.loads(info)
-    #Get the entire blockchain
-    r = requests.get(pnode)
-    latestBlockchain = json.loads(r.text)
+    latestBlockchain = getBlockchain()
+    lastIndex = len(latestBlockchain) - 1
+    # newBlock = Block(blockInfo['previousHash'],parseTransactions(blockInfo['transactions']))
+    previousBlock = getLastBlock()
 
-    Blockchain[blockInfo['hash']] = blockInfo
-    blocksList.append(Block(blockInfo['previousHash'],parseTransactions(blockInfo['transactions'])))
+    if block_.validateJson(previousBlock, blockInfo):
+        #Added to the list
+        Blockchain[blockInfo['hash']] = blockInfo
+        blocksList.append(Block(blockInfo['hash'],parseTransactions(blockInfo['transactions']),int(lastIndex)))
     
 
-
-# def generateRandomString(num):
-#     return ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(num)])
-
-# def dummyTransactions(num):
-#     t = []
-#     for x in range(num):
-#         t.append(Transaction(generateRandomString(),generateRandomString(),random.randint(1,100)))
-#     return t
-
-# def getBlockchain():
-#     #Get the updated blockchain from a hard-coded primary node
-
-
-
-# @app.route('/')
-# def createBlock():
-#     #Get the blockchain
-#     getBlockchain()
-#     #Create the block
- #Parse the transactions
+@app.route('/createblock')
+def createBlock():
+    #Get the blockchain
+    latestBlockchain = getBlockchain()
+    lastIndex = len(latestBlockchain)-1
+    previousBlock = getLastBlock()
+    #Create the block
+    newBlock = Block(previousBlock['hash'],dummyTransactions(6),int(lastIndex))
+    newBlockJson = newBlock.getAllInfo()
+    if block_.Block.validateJson(getLastBlock(),newBlockJson):
+        #Add to the existing chain
+        Blockchain[newBlock.getHash()] = newBlockJson
+        return json.dumps(Blockchain)
+    return "Could not create"
+    #Parse the transactions
     # allTransactions = []
     # snippets = transactions.split(",")
     # for snippet in snippets:

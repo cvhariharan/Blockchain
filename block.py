@@ -2,11 +2,10 @@
 import hashlib, json
 import transaction
 class Block:
-    def __init__(self, previousHash, transactions, js):
-        if js != None:
-            blocks = json.loads(js)
+    def __init__(self, previousHash, transactions, index):
+        if index != None:
             self.previousHash = previousHash
-            self.index = blocks[self.previousHash]['index']+1
+            self.index = index + 1#blocks[self.previousHash]['index']+1
             self.transactions = transactions
         else:
             self.previousHash = ""
@@ -42,9 +41,19 @@ class Block:
             if block.getIndex() == (previousBlock.getIndex()+1):
                 return True
             else:
-                return false
+                return False
         else:
-            return false
+            return False
+
+    def validateJson(previousJson, blockJson):
+        if blockJson['previousHash'] == previousJson['hash']:
+            if int(blockJson['index']) == int(previousJson['index']+1):
+                return True
+            else:
+                return False
+        else:
+            return False
+
 
     def getLongestChain(newBlockchain, Blockchain):
         if len(newBlockchain) > Blockchain:
