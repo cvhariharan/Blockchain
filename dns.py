@@ -7,8 +7,8 @@ def availableNodes():
     allNodes = ""
     with open('list.txt','r') as nodes:
         for line in nodes.readlines():
-           allNodes = allNodes + line
+           allNodes = allNodes + line + ","
         return allNodes
 
 if __name__ == '__main__':
-   app.run()
+   app.run('127.0.0.1',2000)

@@ -46,13 +46,28 @@ class Block:
             return False
 
     def validateJson(previousJson, blockJson):
-        if blockJson['previousHash'] == previousJson['hash']:
-            if int(blockJson['index']) == int(previousJson['index']+1):
-                return True
+        print("old")
+        print(previousJson)
+        print("new")
+        print(blockJson)
+        if blockJson['index'] != 0:
+            if blockJson['previousHash'] == previousJson['hash']:
+                if int(blockJson['index']) == int(previousJson['index']+1):
+                    print("True")
+                    return True
+                else:
+                    return False
             else:
                 return False
         else:
-            return False
+            #If its genesis block
+            if len(previousJson) > 0:
+                if previousJson['index'] != blockJson['index']:
+                    return True
+                else:
+                    return False
+            else:
+                return True
 
 
     def getLongestChain(newBlockchain, Blockchain):
