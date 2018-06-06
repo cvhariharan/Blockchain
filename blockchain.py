@@ -67,6 +67,14 @@ def genesisBlock():
         r = requests.post(fnode+"/addblock", data = payload)
     return "Created genesis block with hash: "+genesis.getHash()
 
+@app.route('/view')
+def view():
+    return render_template('chain.html', result = Blockchain)
+
+@app.route('/button')
+def root():
+    return render_template('button.html')
+
 @app.route("/chain")
 def printBlockchain():
     return jsonify(Blockchain)
@@ -188,7 +196,8 @@ def createBlock():
             payload = {'blockInfo':json.dumps(newBlockJson)}
             for pnode in pnodes:
                 r = requests.post(pnode+"/addblock", data = payload)
-        return jsonify(Blockchain)
+        # return jsonify(Blockchain)
+        return render_template('chain.html', result = Blockchain)
     else:
         previousBlock = getLocalLastBlock()
         lastIndex = previousBlock['index']
@@ -202,7 +211,8 @@ def createBlock():
             for fnode in fnodes:
                 r = requests.post(fnode+"/addblock", data = payload)
 
-        return jsonify(Blockchain)
+        #return jsonify(Blockchain)
+        return render_template('chain.html', result = Blockchain)
     return "Could not create"
 
 if __name__ == '__main__':
