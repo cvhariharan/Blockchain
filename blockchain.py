@@ -54,18 +54,19 @@ def parseTransactions(transaction):
 
 @app.route("/initiate")
 def genesisBlock():
-    genesisTransaction = Transaction("","",0);
-    tl = []
-    tl.append(genesisTransaction)
-    genesis = Block("",tl,None)
-    blocksList.append(genesis)
-    Blockchain.clear()
-    Blockchain[genesis.getHash()] = genesis.getAllInfo()
-    #Send a request to friend nodes to update
-    payload = {'blockInfo':json.dumps(genesis.getAllInfo())}
-    for fnode in fnodes:
-        r = requests.post(fnode+"/addblock", data = payload)
-    return "Created genesis block with hash: "+genesis.getHash()
+    if primary == 1:
+        genesisTransaction = Transaction("","",0);
+        tl = []
+        tl.append(genesisTransaction)
+        genesis = Block("",tl,None)
+        blocksList.append(genesis)
+        Blockchain.clear()
+        Blockchain[genesis.getHash()] = genesis.getAllInfo()
+        #Send a request to friend nodes to update
+        payload = {'blockInfo':json.dumps(genesis.getAllInfo())}
+        for fnode in fnodes:
+            r = requests.post(fnode+"/addblock", data = payload)
+        return "Created genesis block with hash: "+genesis.getHash()
 
 @app.route('/view')
 def view():
