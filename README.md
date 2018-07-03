@@ -1,5 +1,5 @@
 # Blockchain
-Each instance of blockchain.py will be a new node. If the port is 5000, it is a primary node. There has to be at least one primary node.
+Each instance of blockchain.py will be a new node. There has to be at least one primary node.
 
 Creating a primary node -
 
